@@ -18,15 +18,21 @@ import rx.Observable;
 public class CurrencyConverterController {
 
     private LatestExchangeRateProvider latestExchangeRateProvider;
+    private DeferredResultFactory deferredResultFactory;
 
     @Autowired
     public void setLatestExchangeRateProvider(LatestExchangeRateProvider latestExchangeRateProvider) {
         this.latestExchangeRateProvider = latestExchangeRateProvider;
     }
 
+    @Autowired
+    public void setDeferredResultFactory(DeferredResultFactory deferredResultFactory) {
+        this.deferredResultFactory = deferredResultFactory;
+    }
+
     @RequestMapping(value = "/currencyConverter", method = RequestMethod.POST)
     public DeferredResult<CurrencyConverterResponse> convertCurrency(CurrencyConverterRequest request) {
-        final DeferredResult<CurrencyConverterResponse> currencyConversionResult = new DeferredResult<CurrencyConverterResponse>();
+        final DeferredResult<CurrencyConverterResponse> currencyConversionResult = deferredResultFactory.createDeferredResult();
         Observable<LatestExchangeRateResponse> latestExchangeRate = latestExchangeRateProvider.getLatestExchangeRate(request.toLatestExchangeRequest());
         latestExchangeRate.subscribe(
                 latestExchangeRateResponse -> currencyConversionResult.setResult(CurrencyConverterResponse.fromLatestExchangeResponse(latestExchangeRateResponse)),
@@ -34,6 +40,7 @@ public class CurrencyConverterController {
         );
         return currencyConversionResult;
     }
+
 
 
 }

@@ -34,6 +34,7 @@ public class CurrencyConverterControllerTest {
     public void setUp() {
         currencyConverterController = new CurrencyConverterController();
         currencyConverterController.setLatestExchangeRateProvider(latestExchangeRateProvider);
+        currencyConverterController.setDeferredResultFactory(new DeferredResultFactory());
     }
 
 
