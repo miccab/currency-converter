@@ -1,7 +1,6 @@
 package miccab.currencyConverter.controller;
 
-import miccab.currencyConverter.dto.*;
-import miccab.currencyConverter.dto.Error;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.async.DeferredResult;
 
@@ -11,9 +10,10 @@ import org.springframework.web.context.request.async.DeferredResult;
 @Component
 public class DeferredResultFactory {
 
-    private static final Error TIMEOUT_ERROR = new Error("Operation timeout");
-    private long operationTimeout = 2000;
+    private static final Object TIMEOUT_ERROR = new RuntimeException("Operation timeout");
+    private long operationTimeout;
 
+    @Value("${webEndpoint.operationTimeout.millis}")
     public void setOperationTimeout(long operationTimeout) {
         this.operationTimeout = operationTimeout;
     }

@@ -5,6 +5,7 @@ import miccab.currencyConverter.exchangeRate.api.LatestExchangeRateProvider;
 import miccab.currencyConverter.exchangeRate.api.LatestExchangeRateRequest;
 import miccab.currencyConverter.exchangeRate.api.LatestExchangeRateResponse;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -39,7 +40,7 @@ public class CurrencyConverterControllerTest {
 
 
     @Test
-    public void shouldReturnErrorObjectWhenExchangeRateReportedError() {
+    public void shouldReturnExceptionWhenExchangeRateReportedUnexpectedError() {
         final CurrencyConverterRequest request = new CurrencyConverterRequest();
         request.setCurrencyFrom("EUR");
         request.setCurrencyTo("USD");
@@ -48,8 +49,23 @@ public class CurrencyConverterControllerTest {
         DeferredResult<CurrencyConverterResponse> result = currencyConverterController.convertCurrency(request);
 
         assertTrue(result.hasResult());
-        assertTrue(result.getResult() instanceof miccab.currencyConverter.dto.Error);
+        assertTrue(result.getResult() instanceof RuntimeException);
 
+    }
+
+    @Test
+    @Ignore
+    public void shouldReturnLatestExchangeDataWithErrorWhenClientProvidedWrongInformation() {
+        final CurrencyConverterRequest request = new CurrencyConverterRequest();
+        request.setCurrencyFrom("EUR");
+        request.setCurrencyTo("USD");
+        final LatestExchangeRateResponse responseFromExchangeRateProvider = new LatestExchangeRateResponse(request.getCurrencyFrom(), request.getCurrencyTo(), BigDecimal.TEN, LocalDateTime.now());
+        when(latestExchangeRateProvider.getLatestExchangeRate(any(LatestExchangeRateRequest.class))).thenReturn(Observable.error(new RuntimeException("Unexpected error")));
+
+        DeferredResult<CurrencyConverterResponse> result = currencyConverterController.convertCurrency(request);
+
+        assertTrue(result.hasResult());
+        // TODO
     }
 
     @Test
