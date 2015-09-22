@@ -36,11 +36,13 @@ public class CurrencyConverterController {
     @RequestMapping(value = "/currencyConverter", method = RequestMethod.POST)
     public DeferredResult<CurrencyConverterResponse> convertCurrency(CurrencyConverterRequest request) {
         final DeferredResult<CurrencyConverterResponse> currencyConversionResult = deferredResultFactory.createDeferredResult();
+        // TODO: support historical rates
         Observable<Optional<LatestExchangeRateResponse>> latestExchangeRate = latestExchangeRateProvider.getLatestExchangeRate(request.toLatestExchangeRequest());
         latestExchangeRate.subscribe(
                 latestExchangeRateResponse -> currencyConversionResult.setResult(CurrencyConverterResponse.fromLatestExchangeResponse(request, latestExchangeRateResponse)),
                 (errorFromLatestExchangeProvider) -> handleError(errorFromLatestExchangeProvider, currencyConversionResult)
         );
+        // TODO: persist responses
         return currencyConversionResult;
     }
 

@@ -51,6 +51,7 @@ public class OpenExchangeRateLatestProvider implements LatestExchangeRateProvide
             exchangeRate = response.getExchangeRates().get(request.getCurrencyTo());
         } else if (request.getCurrencyTo().equals(response.getExchangeRatesBaseCurrency())) {
             exchangeRate = inverse(response.getExchangeRates().get(request.getCurrencyFrom()));
+            // TODO: control precision
         } else {
             exchangeRate = computeExchangeRateUsingBaseCurrency(request, response);
         }
@@ -71,6 +72,7 @@ public class OpenExchangeRateLatestProvider implements LatestExchangeRateProvide
         } else {
             final BigDecimal rateFromCurrencyFrom2Base = inverse(rateFromBase2CurrencyFrom);
             return rateFromCurrencyFrom2Base.multiply(rateFromBase2CurrencyTo);
+            // TODO: control precision
         }
     }
 }
