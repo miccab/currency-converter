@@ -13,6 +13,7 @@ public class Configuration {
 
     @Bean
     public RxClient<RxObservableInvoker> createRxClient() {
-      return RxObservable.newClient();
+        // TODO: configure socket read/connect timeout
+        return RxObservable.newClient();
     }
 }

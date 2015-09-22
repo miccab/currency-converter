@@ -41,9 +41,13 @@ public class CachingLatestExchangeRateProvider implements LatestExchangeRateProv
             return Observable.just(resultFromCache);
         } else {
             final Observable<Optional<LatestExchangeRateResponse>> resultFromRealService = latestExchangeRateProvider.getLatestExchangeRate(request);
-            resultFromRealService.forEach(exchangeRate -> cache.put(cacheKey, exchangeRate));
+            resultFromRealService.forEach(exchangeRate -> cache.put(cacheKey, exchangeRate), this::onError);
             return resultFromRealService;
         }
+    }
+
+    private void onError(Throwable throwable) {
+        // ignore error here
     }
 }
 

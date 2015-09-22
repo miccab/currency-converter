@@ -17,6 +17,18 @@ public class TunedLatestExchangeRateProviderFactory {
     private boolean cachingEnabled;
     private long cacheMaxSize;
     private long cacheExpirationTimeInMillis;
+    private boolean hystrixEnabled;
+    private int hystrixOperationTimeoutInMillis;
+
+    @Value("${tunedLatestExchangeRateProvider.hystrix.operationTimeout.millis}")
+    public void setHystrixOperationTimeoutInMillis(int hystrixOperationTimeoutInMillis) {
+        this.hystrixOperationTimeoutInMillis = hystrixOperationTimeoutInMillis;
+    }
+
+    @Value("${tunedLatestExchangeRateProvider.hystrix.enabled}")
+    public void setHystrixEnabled(boolean hystrixEnabled) {
+        this.hystrixEnabled = hystrixEnabled;
+    }
 
     @Value("${tunedLatestExchangeRateProvider.cache.enabled}")
     public void setCachingEnabled(boolean cachingEnabled) {
@@ -41,10 +53,16 @@ public class TunedLatestExchangeRateProviderFactory {
     @Bean
     @Qualifier("exposedToClient")
     public LatestExchangeRateProvider tunedLatestExchangeRateProvider() {
+        final LatestExchangeRateProvider cachedProvider;
         if (cachingEnabled) {
-            return CachingLatestExchangeRateProvider.create(latestExchangeRateProvider, cacheExpirationTimeInMillis, cacheMaxSize);
+            cachedProvider = CachingLatestExchangeRateProvider.create(latestExchangeRateProvider, cacheExpirationTimeInMillis, cacheMaxSize);
         } else {
-            return latestExchangeRateProvider;
+            cachedProvider = latestExchangeRateProvider;
+        }
+        if (hystrixEnabled) {
+            return new HystrixLatestExchangeRateProvider(cachedProvider, hystrixOperationTimeoutInMillis);
+        } else {
+            return cachedProvider;
         }
     }
 }
