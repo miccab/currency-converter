@@ -3,6 +3,7 @@ package miccab.currencyConverter.dto;
 import miccab.currencyConverter.exchangeRate.api.LatestExchangeRateResponse;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 
 /**
  * Created by michal on 17.09.15.
@@ -11,6 +12,7 @@ public class CurrencyConverterResponse {
     private String currencyFrom;
     private String currencyTo;
     private BigDecimal exchangeRate;
+    private boolean exchangeRateNotFound;
 
     public String getCurrencyFrom() {
         return currencyFrom;
@@ -36,11 +38,24 @@ public class CurrencyConverterResponse {
         this.exchangeRate = exchangeRate;
     }
 
-    public static CurrencyConverterResponse fromLatestExchangeResponse(LatestExchangeRateResponse latestExchangeRateResponse) {
+    public boolean isExchangeRateNotFound() {
+        return exchangeRateNotFound;
+    }
+
+    public void setExchangeRateNotFound(boolean exchangeRateNotFound) {
+        this.exchangeRateNotFound = exchangeRateNotFound;
+    }
+
+    public static CurrencyConverterResponse fromLatestExchangeResponse(CurrencyConverterRequest request, Optional<LatestExchangeRateResponse> latestExchangeRateResponse) {
         final CurrencyConverterResponse result = new CurrencyConverterResponse();
-        result.setCurrencyFrom(latestExchangeRateResponse.getCurrencyFrom());
-        result.setCurrencyTo(latestExchangeRateResponse.getCurrencyTo());
-        result.setExchangeRate(latestExchangeRateResponse.getExchangeRate());
+        result.setCurrencyFrom(request.getCurrencyFrom());
+        result.setCurrencyTo(request.getCurrencyTo());
+        if (latestExchangeRateResponse.isPresent()) {
+            final LatestExchangeRateResponse latestExchangeRate = latestExchangeRateResponse.get();
+            result.setExchangeRate(latestExchangeRate.getExchangeRate());
+        } else {
+            result.setExchangeRateNotFound(true);
+        }
         return result;
     }
 }

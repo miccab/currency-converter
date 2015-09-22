@@ -10,6 +10,7 @@ import rx.Observable;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 /**
  * Created by michal on 17.09.15.
@@ -18,13 +19,13 @@ import java.time.LocalDateTime;
 @Profile(Profiles.EXTERNAL_SERVICES_FAKE)
 public class FakeLatestExchangeRateProvider implements LatestExchangeRateProvider {
     @Override
-    public Observable<LatestExchangeRateResponse> getLatestExchangeRate(LatestExchangeRateRequest request) {
+    public Observable<Optional<LatestExchangeRateResponse>> getLatestExchangeRate(LatestExchangeRateRequest request) {
         return Observable.just(
-                new LatestExchangeRateResponse(
+                Optional.of(new LatestExchangeRateResponse(
                         request.getCurrencyFrom(),
                         request.getCurrencyTo(),
                         BigDecimal.ONE,
-                        LocalDateTime.now())
+                        LocalDateTime.now()))
         );
     }
 }

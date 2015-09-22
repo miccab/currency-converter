@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
 import rx.Observable;
 
+import java.util.Optional;
+
 /**
  * Created by michal on 17.09.15.
  */
@@ -34,16 +36,15 @@ public class CurrencyConverterController {
     @RequestMapping(value = "/currencyConverter", method = RequestMethod.POST)
     public DeferredResult<CurrencyConverterResponse> convertCurrency(CurrencyConverterRequest request) {
         final DeferredResult<CurrencyConverterResponse> currencyConversionResult = deferredResultFactory.createDeferredResult();
-        Observable<LatestExchangeRateResponse> latestExchangeRate = latestExchangeRateProvider.getLatestExchangeRate(request.toLatestExchangeRequest());
+        Observable<Optional<LatestExchangeRateResponse>> latestExchangeRate = latestExchangeRateProvider.getLatestExchangeRate(request.toLatestExchangeRequest());
         latestExchangeRate.subscribe(
-                latestExchangeRateResponse -> currencyConversionResult.setResult(CurrencyConverterResponse.fromLatestExchangeResponse(latestExchangeRateResponse)),
+                latestExchangeRateResponse -> currencyConversionResult.setResult(CurrencyConverterResponse.fromLatestExchangeResponse(request, latestExchangeRateResponse)),
                 (errorFromLatestExchangeProvider) -> handleError(errorFromLatestExchangeProvider, currencyConversionResult)
         );
         return currencyConversionResult;
     }
 
     private <T> void handleError(Throwable error, DeferredResult<T> deferredResult) {
-        // TODO: distinguish between user errors and server errors
         LOG.error("Unexpected error", error);
         deferredResult.setErrorResult(error);
     }

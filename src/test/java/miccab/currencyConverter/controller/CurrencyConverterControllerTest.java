@@ -5,7 +5,6 @@ import miccab.currencyConverter.exchangeRate.api.LatestExchangeRateProvider;
 import miccab.currencyConverter.exchangeRate.api.LatestExchangeRateRequest;
 import miccab.currencyConverter.exchangeRate.api.LatestExchangeRateResponse;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -15,6 +14,7 @@ import rx.Observable;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
@@ -54,18 +54,19 @@ public class CurrencyConverterControllerTest {
     }
 
     @Test
-    @Ignore
-    public void shouldReturnLatestExchangeDataWithErrorWhenClientProvidedWrongInformation() {
+    public void shouldReturnLatestExchangeDataWithErrorWhenExchangeRateDidNotFindRate() {
         final CurrencyConverterRequest request = new CurrencyConverterRequest();
         request.setCurrencyFrom("EUR");
         request.setCurrencyTo("USD");
-        final LatestExchangeRateResponse responseFromExchangeRateProvider = new LatestExchangeRateResponse(request.getCurrencyFrom(), request.getCurrencyTo(), BigDecimal.TEN, LocalDateTime.now());
-        when(latestExchangeRateProvider.getLatestExchangeRate(any(LatestExchangeRateRequest.class))).thenReturn(Observable.error(new RuntimeException("Unexpected error")));
+        when(latestExchangeRateProvider.getLatestExchangeRate(any(LatestExchangeRateRequest.class))).thenReturn(Observable.just(Optional.empty()));
 
         DeferredResult<CurrencyConverterResponse> result = currencyConverterController.convertCurrency(request);
 
         assertTrue(result.hasResult());
-        // TODO
+        final CurrencyConverterResponse converterResult = (CurrencyConverterResponse) result.getResult();
+        assertEquals(request.getCurrencyFrom(), converterResult.getCurrencyFrom());
+        assertEquals(request.getCurrencyTo(), converterResult.getCurrencyTo());
+        assertEquals(true, converterResult.isExchangeRateNotFound());
     }
 
     @Test
@@ -74,12 +75,14 @@ public class CurrencyConverterControllerTest {
         request.setCurrencyFrom("EUR");
         request.setCurrencyTo("USD");
         final LatestExchangeRateResponse responseFromExchangeRateProvider = new LatestExchangeRateResponse(request.getCurrencyFrom(), request.getCurrencyTo(), BigDecimal.TEN, LocalDateTime.now());
-        when(latestExchangeRateProvider.getLatestExchangeRate(any(LatestExchangeRateRequest.class))).thenReturn(Observable.just(responseFromExchangeRateProvider));
+        when(latestExchangeRateProvider.getLatestExchangeRate(any(LatestExchangeRateRequest.class))).thenReturn(Observable.just(Optional.of(responseFromExchangeRateProvider)));
 
         DeferredResult<CurrencyConverterResponse> result = currencyConverterController.convertCurrency(request);
 
         assertTrue(result.hasResult());
         final CurrencyConverterResponse converterResult = (CurrencyConverterResponse) result.getResult();
         assertEquals(BigDecimal.TEN, converterResult.getExchangeRate());
+        assertEquals(request.getCurrencyFrom(), converterResult.getCurrencyFrom());
+        assertEquals(request.getCurrencyTo(), converterResult.getCurrencyTo());
     }
 }

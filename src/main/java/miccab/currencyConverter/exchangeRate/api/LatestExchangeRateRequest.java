@@ -19,4 +19,12 @@ public class LatestExchangeRateRequest {
     public String getCurrencyTo() {
         return currencyTo;
     }
+
+    @Override
+    public String toString() {
+        return "LatestExchangeRateRequest{" +
+                "currencyFrom='" + currencyFrom + '\'' +
+                ", currencyTo='" + currencyTo + '\'' +
+                '}';
+    }
 }
