@@ -16,7 +16,7 @@ import rx.Observable;
 /**
  * Created by michal on 17.09.15.
  */
-@RestController(value = "/currencyConverter")
+@RestController
 public class CurrencyConverterController extends BaseController {
     private static final Logger LOG = LoggerFactory.getLogger(CurrencyConverterController.class);
     private DeferredResultFactory deferredResultFactory;
@@ -32,7 +32,7 @@ public class CurrencyConverterController extends BaseController {
         this.deferredResultFactory = deferredResultFactory;
     }
 
-    @RequestMapping(method = RequestMethod.GET)
+    @RequestMapping(value = "/currencyConverter", method = RequestMethod.GET)
     public DeferredResult<CurrencyConversionsResponse> getRecentConversionsForUser() {
         final DeferredResult<CurrencyConversionsResponse> currencyConversions = deferredResultFactory.createDeferredResult();
         final Observable<CurrencyConversionsResponse> observableConversions = currencyConverterService.getRecentConversionsForUser(getCurrentUser());
@@ -40,7 +40,7 @@ public class CurrencyConverterController extends BaseController {
         return currencyConversions;
     }
 
-    @RequestMapping(method = RequestMethod.POST)
+    @RequestMapping(value = "/currencyConverter", method = RequestMethod.POST)
     public DeferredResult<CurrencyConverterResponse> convertCurrency(CurrencyConverterRequest request) {
         final DeferredResult<CurrencyConverterResponse> currencyConversionResult = deferredResultFactory.createDeferredResult();
         Observable<CurrencyConverterResponse> observableConversionResponse = currencyConverterService.convertCurrency(request, getCurrentUser());
