@@ -3,6 +3,7 @@ package miccab.currencyConverter.controller;
 import miccab.currencyConverter.dto.*;
 import miccab.currencyConverter.exchangeRate.api.LatestExchangeRateProvider;
 import miccab.currencyConverter.exchangeRate.api.LatestExchangeRateResponse;
+import miccab.currencyConverter.service.CurrencyConverterService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,13 +22,12 @@ import java.util.Optional;
 @RestController
 public class CurrencyConverterController {
     private static final Logger LOG = LoggerFactory.getLogger(CurrencyConverterController.class);
-    private LatestExchangeRateProvider latestExchangeRateProvider;
     private DeferredResultFactory deferredResultFactory;
+    private CurrencyConverterService currencyConverterService;
 
     @Autowired
-    @Qualifier("exposedToClient")
-    public void setLatestExchangeRateProvider(LatestExchangeRateProvider latestExchangeRateProvider) {
-        this.latestExchangeRateProvider = latestExchangeRateProvider;
+    public void setCurrencyConverterService(CurrencyConverterService currencyConverterService) {
+        this.currencyConverterService = currencyConverterService;
     }
 
     @Autowired
@@ -38,14 +38,17 @@ public class CurrencyConverterController {
     @RequestMapping(value = "/currencyConverter", method = RequestMethod.POST)
     public DeferredResult<CurrencyConverterResponse> convertCurrency(CurrencyConverterRequest request) {
         final DeferredResult<CurrencyConverterResponse> currencyConversionResult = deferredResultFactory.createDeferredResult();
-        // TODO: support historical rates
-        Observable<Optional<LatestExchangeRateResponse>> latestExchangeRate = latestExchangeRateProvider.getLatestExchangeRate(request.toLatestExchangeRequest());
-        latestExchangeRate.subscribe(
-                latestExchangeRateResponse -> currencyConversionResult.setResult(CurrencyConverterResponse.fromLatestExchangeResponse(request, latestExchangeRateResponse)),
+        Observable<CurrencyConverterResponse> observableConversionResponse = currencyConverterService.convertCurrency(request, getCurrentUser());
+        observableConversionResponse.subscribe(
+                currencyConversionResult::setResult,
                 (errorFromLatestExchangeProvider) -> handleError(errorFromLatestExchangeProvider, currencyConversionResult)
         );
-        // TODO: persist responses
         return currencyConversionResult;
+    }
+
+    private String getCurrentUser() {
+        // TODO
+        return "anonymous";
     }
 
     private <T> void handleError(Throwable error, DeferredResult<T> deferredResult) {

@@ -1,9 +1,7 @@
 package miccab.currencyConverter.controller;
 
 import miccab.currencyConverter.dto.*;
-import miccab.currencyConverter.exchangeRate.api.LatestExchangeRateProvider;
-import miccab.currencyConverter.exchangeRate.api.LatestExchangeRateRequest;
-import miccab.currencyConverter.exchangeRate.api.LatestExchangeRateResponse;
+import miccab.currencyConverter.service.CurrencyConverterService;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -13,12 +11,10 @@ import org.springframework.web.context.request.async.DeferredResult;
 import rx.Observable;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.Optional;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
-import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.when;
 
 /**
@@ -28,13 +24,13 @@ import static org.mockito.Mockito.when;
 public class CurrencyConverterControllerTest {
 
     @Mock
-    LatestExchangeRateProvider latestExchangeRateProvider;
+    CurrencyConverterService currencyConverterService;
     CurrencyConverterController currencyConverterController;
 
     @Before
     public void setUp() {
         currencyConverterController = new CurrencyConverterController();
-        currencyConverterController.setLatestExchangeRateProvider(latestExchangeRateProvider);
+        currencyConverterController.setCurrencyConverterService(currencyConverterService);
         currencyConverterController.setDeferredResultFactory(new DeferredResultFactory());
     }
 
@@ -44,7 +40,7 @@ public class CurrencyConverterControllerTest {
         final CurrencyConverterRequest request = new CurrencyConverterRequest();
         request.setCurrencyFrom("EUR");
         request.setCurrencyTo("USD");
-        when(latestExchangeRateProvider.getLatestExchangeRate(any(LatestExchangeRateRequest.class))).thenReturn(Observable.error(new RuntimeException("Unexpected error")));
+        when(currencyConverterService.convertCurrency(eq(request), anyString())).thenReturn(Observable.error(new RuntimeException("Unexpected error")));
 
         DeferredResult<CurrencyConverterResponse> result = currencyConverterController.convertCurrency(request);
 
@@ -54,28 +50,15 @@ public class CurrencyConverterControllerTest {
     }
 
     @Test
-    public void shouldReturnLatestExchangeDataWithErrorWhenExchangeRateDidNotFindRate() {
-        final CurrencyConverterRequest request = new CurrencyConverterRequest();
-        request.setCurrencyFrom("EUR");
-        request.setCurrencyTo("USD");
-        when(latestExchangeRateProvider.getLatestExchangeRate(any(LatestExchangeRateRequest.class))).thenReturn(Observable.just(Optional.empty()));
-
-        DeferredResult<CurrencyConverterResponse> result = currencyConverterController.convertCurrency(request);
-
-        assertTrue(result.hasResult());
-        final CurrencyConverterResponse converterResult = (CurrencyConverterResponse) result.getResult();
-        assertEquals(request.getCurrencyFrom(), converterResult.getCurrencyFrom());
-        assertEquals(request.getCurrencyTo(), converterResult.getCurrencyTo());
-        assertEquals(true, converterResult.isExchangeRateNotFound());
-    }
-
-    @Test
     public void shouldReturnLatestExchangeDataWhenExchangeRateWasSuccessful() {
         final CurrencyConverterRequest request = new CurrencyConverterRequest();
         request.setCurrencyFrom("EUR");
         request.setCurrencyTo("USD");
-        final LatestExchangeRateResponse responseFromExchangeRateProvider = new LatestExchangeRateResponse(request.getCurrencyFrom(), request.getCurrencyTo(), BigDecimal.TEN, LocalDateTime.now());
-        when(latestExchangeRateProvider.getLatestExchangeRate(any(LatestExchangeRateRequest.class))).thenReturn(Observable.just(Optional.of(responseFromExchangeRateProvider)));
+        final CurrencyConverterResponse responseFromExchangeRateProvider = new CurrencyConverterResponse();
+        responseFromExchangeRateProvider.setCurrencyFrom(request.getCurrencyFrom());
+        responseFromExchangeRateProvider.setCurrencyTo(request.getCurrencyTo());
+        responseFromExchangeRateProvider.setExchangeRate(BigDecimal.TEN);
+        when(currencyConverterService.convertCurrency(eq(request), anyString())).thenReturn(Observable.just(responseFromExchangeRateProvider));
 
         DeferredResult<CurrencyConverterResponse> result = currencyConverterController.convertCurrency(request);
 
