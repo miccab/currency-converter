@@ -69,5 +69,22 @@ public class CurrencyConverterServiceTest {
         assertEquals(BigDecimal.TEN, result.getExchangeRate());
     }
 
+    @Test
+    public void shouldReturnLatestExchangeDataWhenExchangeRateIsFoundButSavingInDBFailed() {
+        final CurrencyConverterRequest request = new CurrencyConverterRequest();
+        request.setCurrencyFrom("EUR");
+        request.setCurrencyTo("USD");
+        LatestExchangeRateResponse response = new LatestExchangeRateResponse(request.getCurrencyFrom(), request.getCurrencyTo(), BigDecimal.TEN, LocalDateTime.now());
+        when(latestExchangeRateProvider.getLatestExchangeRate(any(LatestExchangeRateRequest.class))).thenReturn(Observable.just(Optional.of(response)));
+        when(currencyConverterDbService.save(any(CurrencyConversion.class))).thenReturn(Observable.error(new RuntimeException("DB error")));
+
+        Observable<CurrencyConverterResponse> observableResult = currencyConverterService.convertCurrency(request, "user");
+
+        CurrencyConverterResponse result = observableResult.toBlocking().single();
+        assertEquals(request.getCurrencyFrom(), result.getCurrencyFrom());
+        assertEquals(request.getCurrencyTo(), result.getCurrencyTo());
+        assertFalse(result.isExchangeRateNotFound());
+        assertEquals(BigDecimal.TEN, result.getExchangeRate());
+    }
 
 }

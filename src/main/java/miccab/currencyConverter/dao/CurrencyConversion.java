@@ -1,15 +1,30 @@
 package miccab.currencyConverter.dao;
 
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
 import java.math.BigDecimal;
 
 /**
  * Created by michal on 23.09.15.
  */
+@Entity
 public class CurrencyConversion {
+    @Id
+    @GeneratedValue
+    private Long id;
     private String currencyFrom;
     private String currencyTo;
     private BigDecimal exchangeRate;
     private String user;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     public String getCurrencyFrom() {
         return currencyFrom;

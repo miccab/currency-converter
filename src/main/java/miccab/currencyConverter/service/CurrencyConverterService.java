@@ -48,7 +48,7 @@ public class CurrencyConverterService {
         } else {
             final CurrencyConversion currencyConversion = createCurrencyConversion(currentUser, responseToBePersisted);
             final Observable<Long> savingResult = currencyConverterDbService.save(currencyConversion);
-            // result can be done async
+            // persist can be done async - so updates in DB will be eventually consistent Or we may even loose data
             savingResult.forEach(persistedId -> LOG.debug("Currency conversion persisted under id={} for user={}", persistedId, currentUser),
                                  errorDuringPersistance -> LOG.error(String.format("Error reported while persisting conversion for user=%s", currentUser), errorDuringPersistance));
         }
