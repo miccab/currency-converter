@@ -11,6 +11,7 @@ import org.springframework.web.context.request.async.DeferredResult;
 import rx.Observable;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
@@ -36,7 +37,7 @@ public class CurrencyConverterControllerTest {
 
 
     @Test
-    public void shouldReturnExceptionWhenExchangeRateReportedUnexpectedError() {
+    public void convertCurrency_shouldReturnExceptionWhenExchangeRateReportedUnexpectedError() {
         final CurrencyConverterRequest request = new CurrencyConverterRequest();
         request.setCurrencyFrom("EUR");
         request.setCurrencyTo("USD");
@@ -50,7 +51,7 @@ public class CurrencyConverterControllerTest {
     }
 
     @Test
-    public void shouldReturnLatestExchangeDataWhenExchangeRateWasSuccessful() {
+    public void convertCurrency_shouldReturnLatestExchangeDataWhenExchangeRateWasSuccessful() {
         final CurrencyConverterRequest request = new CurrencyConverterRequest();
         request.setCurrencyFrom("EUR");
         request.setCurrencyTo("USD");
@@ -58,6 +59,7 @@ public class CurrencyConverterControllerTest {
         responseFromExchangeRateProvider.setCurrencyFrom(request.getCurrencyFrom());
         responseFromExchangeRateProvider.setCurrencyTo(request.getCurrencyTo());
         responseFromExchangeRateProvider.setExchangeRate(BigDecimal.TEN);
+        responseFromExchangeRateProvider.setCalculatedAt(LocalDateTime.MAX);
         when(currencyConverterService.convertCurrency(eq(request), anyString())).thenReturn(Observable.just(responseFromExchangeRateProvider));
 
         DeferredResult<CurrencyConverterResponse> result = currencyConverterController.convertCurrency(request);
@@ -67,5 +69,17 @@ public class CurrencyConverterControllerTest {
         assertEquals(BigDecimal.TEN, converterResult.getExchangeRate());
         assertEquals(request.getCurrencyFrom(), converterResult.getCurrencyFrom());
         assertEquals(request.getCurrencyTo(), converterResult.getCurrencyTo());
+        assertEquals(LocalDateTime.MAX, converterResult.getCalculatedAt());
+    }
+
+    @Test
+    public void getRecentConversionsForUser_shouldReturnDataWhenRecentConversionsLookupWasSuccessful() {
+        CurrencyConversionsResponse responseFromService = new CurrencyConversionsResponse();
+        when(currencyConverterService.getRecentConversionsForUser(anyString())).thenReturn(Observable.just(responseFromService));
+
+        DeferredResult<CurrencyConversionsResponse> result = currencyConverterController.getRecentConversionsForUser();
+
+        assertTrue(result.hasResult());
+        assertTrue(result.getResult() instanceof CurrencyConversionsResponse);
     }
 }

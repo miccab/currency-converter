@@ -1,36 +1,21 @@
-package miccab.currencyConverter.dao;
+package miccab.currencyConverter.dto;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
+import miccab.currencyConverter.dao.ConversionType;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
  * Created by michal on 23.09.15.
  */
-@Entity
 public class CurrencyConversion {
-    @Id
-    @GeneratedValue
-    private Long id;
     private String currencyFrom;
     private String currencyTo;
-    @Column(scale = 10, precision = 10)
     private BigDecimal exchangeRate;
     private String user;
     private LocalDateTime insertTime;
     private ConversionType conversionType;
     private LocalDateTime calculatedAtTime;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public String getCurrencyFrom() {
         return currencyFrom;

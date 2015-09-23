@@ -1,7 +1,9 @@
 package miccab.currencyConverter.service;
 
+import miccab.currencyConverter.dao.ConversionType;
 import miccab.currencyConverter.dao.CurrencyConversion;
 import miccab.currencyConverter.dao.CurrencyConverterDbService;
+import miccab.currencyConverter.dto.CurrencyConversionsResponse;
 import miccab.currencyConverter.dto.CurrencyConverterRequest;
 import miccab.currencyConverter.dto.CurrencyConverterResponse;
 import miccab.currencyConverter.exchangeRate.api.LatestExchangeRateProvider;
@@ -16,6 +18,8 @@ import rx.Observable;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.Optional;
 
 import static junit.framework.Assert.assertEquals;
@@ -37,7 +41,7 @@ public class CurrencyConverterServiceTest {
     CurrencyConverterService currencyConverterService;
 
     @Test
-    public void shouldReturnLatestExchangeDataWithErrorWhenExchangeRateDidNotFindRate() {
+    public void convertCurrency_shouldReturnLatestExchangeDataWithErrorWhenExchangeRateDidNotFindRate() {
         final CurrencyConverterRequest request = new CurrencyConverterRequest();
         request.setCurrencyFrom("EUR");
         request.setCurrencyTo("USD");
@@ -52,7 +56,7 @@ public class CurrencyConverterServiceTest {
     }
 
     @Test
-    public void shouldReturnLatestExchangeDataWhenExchangeRateIsFound() {
+    public void convertCurrency_shouldReturnLatestExchangeDataWhenExchangeRateIsFound() {
         final CurrencyConverterRequest request = new CurrencyConverterRequest();
         request.setCurrencyFrom("EUR");
         request.setCurrencyTo("USD");
@@ -70,7 +74,7 @@ public class CurrencyConverterServiceTest {
     }
 
     @Test
-    public void shouldReturnLatestExchangeDataWhenExchangeRateIsFoundButSavingInDBFailed() {
+    public void convertCurrency_shouldReturnLatestExchangeDataWhenExchangeRateIsFoundButSavingInDBFailed() {
         final CurrencyConverterRequest request = new CurrencyConverterRequest();
         request.setCurrencyFrom("EUR");
         request.setCurrencyTo("USD");
@@ -85,6 +89,54 @@ public class CurrencyConverterServiceTest {
         assertEquals(request.getCurrencyTo(), result.getCurrencyTo());
         assertFalse(result.isExchangeRateNotFound());
         assertEquals(BigDecimal.TEN, result.getExchangeRate());
+    }
+
+    @Test
+    public void getRecentConversionsForUser_shouldReturnConversionsWhenDbHasAny() {
+
+        CurrencyConversion currencyConversionFirst = new CurrencyConversion();
+        currencyConversionFirst.setCalculatedAtTime(LocalDateTime.MAX);
+        currencyConversionFirst.setConversionType(ConversionType.LATEST);
+        currencyConversionFirst.setCurrencyFrom("A");
+        currencyConversionFirst.setCurrencyTo("B");
+        currencyConversionFirst.setExchangeRate(BigDecimal.TEN);
+        currencyConversionFirst.setInsertTime(LocalDateTime.MIN);
+        currencyConversionFirst.setUser("userX");
+        CurrencyConversion currencyConversionSecond = new CurrencyConversion();
+        currencyConversionSecond.setCalculatedAtTime(LocalDateTime.MIN);
+        currencyConversionSecond.setConversionType(ConversionType.HIST);
+        currencyConversionSecond.setCurrencyFrom("B");
+        currencyConversionSecond.setCurrencyTo("A");
+        currencyConversionSecond.setExchangeRate(BigDecimal.ONE);
+        currencyConversionSecond.setInsertTime(LocalDateTime.MAX);
+        currencyConversionSecond.setUser("userY");
+        when(currencyConverterDbService.getRecentConversionsForUser("user")).thenReturn(Observable.just(Arrays.asList(currencyConversionFirst, currencyConversionSecond)));
+
+        Observable<CurrencyConversionsResponse> observableResult = currencyConverterService.getRecentConversionsForUser("user");
+
+        CurrencyConversionsResponse result = observableResult.toBlocking().single();
+        assertEquals(2, result.getCurrencyConversions().size());
+        Iterator<miccab.currencyConverter.dto.CurrencyConversion> iterator = result.getCurrencyConversions().iterator();
+        {
+            miccab.currencyConverter.dto.CurrencyConversion record = iterator.next();
+            assertEquals("A", record.getCurrencyFrom());
+            assertEquals("B", record.getCurrencyTo());
+            assertEquals("userX", record.getUser());
+            assertEquals(LocalDateTime.MAX, record.getCalculatedAtTime());
+            assertEquals(ConversionType.LATEST, record.getConversionType());
+            assertEquals(BigDecimal.TEN, record.getExchangeRate());
+            assertEquals(LocalDateTime.MIN, record.getInsertTime());
+        }
+        {
+            miccab.currencyConverter.dto.CurrencyConversion record = iterator.next();
+            assertEquals("B", record.getCurrencyFrom());
+            assertEquals("A", record.getCurrencyTo());
+            assertEquals("userY", record.getUser());
+            assertEquals(LocalDateTime.MIN, record.getCalculatedAtTime());
+            assertEquals(ConversionType.HIST, record.getConversionType());
+            assertEquals(BigDecimal.ONE, record.getExchangeRate());
+            assertEquals(LocalDateTime.MAX, record.getInsertTime());
+        }
     }
 
 }

@@ -3,6 +3,7 @@ package miccab.currencyConverter.dto;
 import miccab.currencyConverter.exchangeRate.api.LatestExchangeRateResponse;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 /**
@@ -13,6 +14,15 @@ public class CurrencyConverterResponse {
     private String currencyTo;
     private BigDecimal exchangeRate;
     private boolean exchangeRateNotFound;
+    private LocalDateTime calculatedAt;
+
+    public LocalDateTime getCalculatedAt() {
+        return calculatedAt;
+    }
+
+    public void setCalculatedAt(LocalDateTime calculatedAt) {
+        this.calculatedAt = calculatedAt;
+    }
 
     public String getCurrencyFrom() {
         return currencyFrom;
@@ -53,6 +63,7 @@ public class CurrencyConverterResponse {
         if (latestExchangeRateResponse.isPresent()) {
             final LatestExchangeRateResponse latestExchangeRate = latestExchangeRateResponse.get();
             result.setExchangeRate(latestExchangeRate.getExchangeRate());
+            result.setCalculatedAt(latestExchangeRate.getCalculatedAt());
         } else {
             result.setExchangeRateNotFound(true);
         }
