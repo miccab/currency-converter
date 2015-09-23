@@ -18,11 +18,11 @@ public class TunedLatestExchangeRateProviderFactory {
     private long cacheMaxSize;
     private long cacheExpirationTimeInMillis;
     private boolean hystrixEnabled;
-    private int hystrixOperationTimeoutInMillis;
+    private int hystrixMaxConcurrentRequests;
 
-    @Value("${tunedLatestExchangeRateProvider.hystrix.operationTimeout.millis}")
-    public void setHystrixOperationTimeoutInMillis(int hystrixOperationTimeoutInMillis) {
-        this.hystrixOperationTimeoutInMillis = hystrixOperationTimeoutInMillis;
+    @Value("${tunedLatestExchangeRateProvider.hystrix.maxConcurrentRequests}")
+    public void setHystrixMaxConcurrentRequests(int hystrixMaxConcurrentRequests) {
+        this.hystrixMaxConcurrentRequests = hystrixMaxConcurrentRequests;
     }
 
     @Value("${tunedLatestExchangeRateProvider.hystrix.enabled}")
@@ -60,7 +60,7 @@ public class TunedLatestExchangeRateProviderFactory {
             cachedProvider = latestExchangeRateProvider;
         }
         if (hystrixEnabled) {
-            return new HystrixLatestExchangeRateProvider(cachedProvider, hystrixOperationTimeoutInMillis);
+            return new HystrixLatestExchangeRateProvider(cachedProvider, hystrixMaxConcurrentRequests);
         } else {
             return cachedProvider;
         }

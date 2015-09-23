@@ -16,11 +16,11 @@ import java.util.Optional;
 public class HystrixLatestExchangeRateProvider implements LatestExchangeRateProvider {
 
     private final LatestExchangeRateProvider latestExchangeRateProvider;
-    private final int operationTimeoutInMillis;
+    private final int maxConcurrentRequests;
 
-    public HystrixLatestExchangeRateProvider(LatestExchangeRateProvider latestExchangeRateProvider, int executionTimeoutInMillis) {
+    public HystrixLatestExchangeRateProvider(LatestExchangeRateProvider latestExchangeRateProvider, int maxConcurrentRequests) {
         this.latestExchangeRateProvider = latestExchangeRateProvider;
-        this.operationTimeoutInMillis = executionTimeoutInMillis;
+        this.maxConcurrentRequests = maxConcurrentRequests;
     }
 
     @Override
@@ -35,7 +35,9 @@ public class HystrixLatestExchangeRateProvider implements LatestExchangeRateProv
         public LatestExchangeRateCommand(LatestExchangeRateRequest request) {
             super(Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey("LatestExchangeRateProvider"))
                         .andCommandPropertiesDefaults(
-                                HystrixCommandProperties.Setter().withExecutionTimeoutInMilliseconds(operationTimeoutInMillis)));
+                                HystrixCommandProperties.Setter().withExecutionIsolationStrategy(HystrixCommandProperties.ExecutionIsolationStrategy.SEMAPHORE)
+                                                                 .withExecutionIsolationSemaphoreMaxConcurrentRequests(maxConcurrentRequests)
+                                                                 .withExecutionTimeoutEnabled(false)));
             this.request = request;
         }
 
